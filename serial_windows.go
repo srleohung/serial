@@ -142,6 +142,7 @@ var (
 	nCreateEvent,
 	nResetEvent,
 	nPurgeComm,
+	nEscapeCommFunction, 	//added for controlling RTS and DTR signal
 	nFlushFileBuffers uintptr
 )
 
@@ -161,6 +162,7 @@ func init() {
 	nResetEvent = getProcAddr(k32, "ResetEvent")
 	nPurgeComm = getProcAddr(k32, "PurgeComm")
 	nFlushFileBuffers = getProcAddr(k32, "FlushFileBuffers")
+	nEscapeCommFunction = getProcAddr(k32, "EscapeCommFunction")	//added for controlling RTS and DTR signal
 }
 
 func getProcAddr(lib syscall.Handle, name string) uintptr {
@@ -324,4 +326,35 @@ func getOverlappedResult(h syscall.Handle, overlapped *syscall.Overlapped) (int,
 	}
 
 	return n, nil
+}
+func (port *Port) SetRTS(rts bool) error {
+	if rts {
+		r, _, err := syscall.Syscall(nEscapeCommFunction, 2, uintptr(port.fd), 3, 0)
+		if r == 0 {
+			return err
+		}
+		return nil
+	}else {
+		r, _, err := syscall.Syscall(nEscapeCommFunction, 2, uintptr(port.fd), 4, 0)
+		if r == 0 {
+			return err
+		}
+		return nil
+	}
+}
+
+func (port *Port) SetDTR(dtr bool) error {
+	if dtr {
+		r, _, err := syscall.Syscall(nEscapeCommFunction, 2, uintptr(port.fd), 5, 0)
+		if r == 0 {
+			return err
+		}
+		return nil
+	}else {
+		r, _, err := syscall.Syscall(nEscapeCommFunction, 2, uintptr(port.fd), 6, 0)
+		if r == 0 {
+			return err
+		}
+		return nil
+	}
 }
