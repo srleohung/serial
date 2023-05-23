@@ -195,3 +195,12 @@ func (p *Port) Flush() error {
 func (p *Port) Close() (err error) {
 	return p.f.Close()
 }
+
+func (port *Port) SetRTS(rts bool) error {
+	return nil
+}
+
+func (port *Port) SetDTR(dtr bool) error {
+	return nil
+}
+
