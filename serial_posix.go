@@ -1,3 +1,4 @@
+//go:build !windows && !linux && cgo
 // +build !windows,!linux,cgo
 
 package serial
@@ -14,6 +15,8 @@ import (
 	"os"
 	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 	//"unsafe"
 )
 
@@ -197,10 +200,35 @@ func (p *Port) Close() (err error) {
 }
 
 func (port *Port) SetRTS(rts bool) error {
-	return nil
+	status, err := port.getModemBitsStatus()
+	if err != nil {
+		return err
+	}
+	if rts {
+		status |= unix.TIOCM_RTS
+	} else {
+		status &^= unix.TIOCM_RTS
+	}
+	return port.setModemBitsStatus(status)
 }
 
 func (port *Port) SetDTR(dtr bool) error {
-	return nil
+	status, err := port.getModemBitsStatus()
+	if err != nil {
+		return err
+	}
+	if dtr {
+		status |= unix.TIOCM_DTR
+	} else {
+		status &^= unix.TIOCM_DTR
+	}
+	return port.setModemBitsStatus(status)
 }
 
+func (port *Port) getModemBitsStatus() (int, error) {
+	return unix.IoctlGetInt((int)(port.f.Fd()), unix.TIOCMGET)
+}
+
+func (port *Port) setModemBitsStatus(status int) error {
+	return unix.IoctlSetPointerInt((int)(port.f.Fd()), unix.TIOCMSET, status)
+}
